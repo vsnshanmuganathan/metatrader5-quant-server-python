@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import MetaTrader5 as mt5
 from flasgger import Swagger
 from werkzeug.middleware.proxy_fix import ProxyFix
+from swagger import swagger_config
 
 # Import routes
 from routes.health import health_bp
@@ -20,40 +21,6 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.config['PREFERRED_URL_SCHEME'] = 'https'
-
-# Swagger configuration
-swagger_config = {
-    "swagger": "2.0",
-    "info": {
-        "title": "MetaTrader5 API",
-        "description": "API documentation for MetaTrader5 Flask application.",
-        "version": "1.0.0"
-    },
-    "basePath": "/",
-    "https": True,
-    "schemes": [
-        "https"
-    ],
-    "securityDefinitions": {
-        "ApiKeyAuth": {
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
-        }
-    },
-    "specs": [
-        {
-            "endpoint": 'apispec_1',
-            "route": '/apispec_1.json',
-            "rule_filter": lambda rule: True,  # Include all routes
-            "model_filter": lambda tag: True,  # Include all models
-        }
-    ],
-    "static_url_path": "/flasgger_static",
-    "swagger_ui": True,
-    "specs_route": "/apidocs/",
-    "headers": []
-}
 
 swagger = Swagger(app, config=swagger_config)
 
