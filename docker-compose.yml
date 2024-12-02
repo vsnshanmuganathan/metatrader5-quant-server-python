@@ -199,6 +199,10 @@ services:
 
 volumes:
   traefik-public-certificates: # Persistent volume for certificates
+  grafana-data: {}
+  prometheus-data: {}
+  postgres-data: {}
+  static_volume: {}
 
 networks:
   default:

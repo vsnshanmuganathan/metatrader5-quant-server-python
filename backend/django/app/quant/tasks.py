@@ -4,8 +4,8 @@ from celery import shared_task
 import logging
 from celery.exceptions import SoftTimeLimitExceeded
 
-from app.quant.algorithms.entry import entry_algorithm
-from app.quant.algorithms.trailing import trailing_stop_algorithm
+from app.quant.algorithms.mean_reversion.entry import entry_algorithm
+from app.quant.algorithms.mean_reversion.trailing import trailing_stop_algorithm
 from app.quant.algorithms.close.close import close_algorithm
 
 logger = logging.getLogger(__name__)
