@@ -71,13 +71,25 @@ This project provides a Docker-based setup to run MetaTrader 5 (MT5) using Wine 
    ACME_EMAIL=youremail@example.com
    ```
 
-3. **Build and Start the Services**
+   **Note:** To generate and set the hashed password in one command for Traefik's HTTP Basic Auth, you can use the following command:
+
+   ```bash
+   export HASHED_PASSWORD=$(openssl passwd -apr1 $PASSWORD)
+   ```
+
+3. **Create Docker Network**
+
+   ```bash
+   docker network create traefik-public
+   ```
+
+4. **Build and Start the Services**
 
    ```bash
    docker-compose up -d
    ```
 
-   This command builds the Docker images and starts the services in detached mode.
+This command builds the Docker images and starts the services in detached mode.
 
 ## Configuration
 

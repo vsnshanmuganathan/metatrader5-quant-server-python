@@ -57,6 +57,7 @@ services:
 
   mt5:
     build:
+      context: backend/mt5
       dockerfile: Dockerfile
     container_name: mt5
     volumes:
@@ -100,8 +101,108 @@ services:
     depends_on:
       - traefik
 
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - default
+
+  django:
+    build:
+      context: backend/django
+      dockerfile: Dockerfile
+    container_name: django
+    volumes:
+      - static_volume:/app/staticfiles
+    restart: unless-stopped
+    ports:
+      - 8000:8000
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+      - traefik
+      - redis
+    networks:
+      - default
+      - traefik-public
+    labels:
+      traefik.enable: true
+      traefik.docker.network: traefik-public
+
+      traefik.http.routers.django-http.rule: Host(`${DJANGO_DOMAIN}`)
+      traefik.http.routers.django-http.entrypoints: http
+      traefik.http.routers.django-http.middlewares: https-redirect
+      traefik.http.routers.django-http.service: django-service
+
+      traefik.http.routers.django-https.rule: Host(`${DJANGO_DOMAIN}`)
+      traefik.http.routers.django-https.entrypoints: https
+      traefik.http.routers.django-https.tls: true
+      traefik.http.routers.django-https.tls.certresolver: le
+      traefik.http.routers.django-https.service: django-service
+
+      traefik.http.services.django-service.loadbalancer.server.port: 8000
+
+      traefik.http.routers.django-static.rule: Host(`${DJANGO_DOMAIN}`) && PathPrefix(`/static/`)
+      traefik.http.routers.django-static.service: django-service
+      traefik.http.middlewares.static-stripprefix.stripprefix.prefixes: /static
+      traefik.http.routers.django-static.middlewares: static-stripprefix@docker
+
+  redis:
+    image: redis:6
+    container_name: redis
+    ports:
+      - 6379:6379
+    cpus: 0.5
+    mem_limit: 512m
+    depends_on:
+      - traefik
+    networks:
+      - default
+
+  celery:
+    build:
+      context: backend/django
+      dockerfile: Dockerfile
+    container_name: celery
+    command: celery -A app worker --loglevel=info --concurrency=3
+    volumes:
+      - static_volume:/app/staticfiles
+    env_file:
+      - .env
+    depends_on:
+      - django
+      - redis
+    networks:
+      - default
+
+  celery-beat:
+    build:
+      context: backend/django
+      dockerfile: Dockerfile
+    container_name: celery-beat
+    command: celery -A app beat --loglevel=info
+    volumes:
+      - static_volume:/app/staticfiles
+    env_file:
+      - .env
+    depends_on:
+      - celery
+      - redis
+    networks:
+      - default
+
 volumes:
   traefik-public-certificates: # Persistent volume for certificates
+  grafana-data: {}
+  prometheus-data: {}
+  postgres-data: {}
+  static_volume: {}
 
 networks:
   default:
